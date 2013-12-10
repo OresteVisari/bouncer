@@ -39,7 +39,15 @@
      */
     latestBallLaunch: 0
   };
+  
+   /**
+   * The set of all sprites
+   */
+  var sprites = new Set(Sprite);
 
+  // Shortcut: an array with all the pads
+  var pads = [];
+ 
   /**
   * The different scores of the current game
   */
@@ -253,15 +261,15 @@
    * @return {boolean} true If any collision.
    */
   Ball.prototype.isCollidingWithAnyPad = function(comingFrom, exclude) {
-    for (var pad of pads) {
-      if (pad == exclude) {
-        continue;
+      for (var key in pads) {
+        if (pads[key] == exclude) {
+          continue;
+        }
+        if (pads[key].isCollidingWith(comingFrom, this)) {
+          this.changeBallColor();
+          return true;
+        }
       }
-      if (pad.isCollidingWith(comingFrom, this)) {
-        this.changeBallColor();
-		return true;
-      }
-    }
     return false;
   };
 
@@ -348,14 +356,7 @@
     sprites.add(ball);
   };
 
-  /**
-   * The set of all sprites
-   */
-  var sprites = new Set();
-
-  // Shortcut: an array with all the pads
-  var pads = [];
-
+ 
   // Initialize sprites
   var padNorth = new Sprite("pad_north");
   var padSouth = new Sprite("pad_south");
@@ -366,10 +367,14 @@
   padSouth.setPosition("center", "bottom");
   padEast.setPosition("left", "center");
   padWest.setPosition("right", "center");
-  for (var pad of [padNorth, padSouth, padEast, padWest]) {
-    pads.push(pad);
-    sprites.add(pad);
-  }
+
+  (function() {
+    var tab = [padNorth, padSouth, padEast, padWest];
+    for (var key in tab ) {
+      pads.push(tab[key]);
+      sprites.add(tab[key]);
+    }
+  })();
 
   sprites.forEach(function (sprite) {
     sprite.writeToDOM();
@@ -379,9 +384,9 @@
   // Handle events
 
   function onmove(e) {
-    for (var pad of pads) {
-      pad.event.pageX = e.pageX;
-      pad.event.pageY = e.pageY;
+    for (var key in pads) {
+      pads[key].event.pageX = e.pageX;
+      pads[key].event.pageY = e.pageY;
     }
     e.stopPropagation();
     e.preventDefault();
@@ -497,7 +502,8 @@
     }
 
     // Handle ball bouncing
-    for (var ball of Ball.balls) {
+    for (var key in Ball.balls) {
+      var ball = Ball.balls[key];
       var horizontalBounce = false;
       var verticalBounce = false;
       var collisionWithHorizontalPad = false;
@@ -554,7 +560,8 @@
     padWest.nextY = Game.Utils.restrictToSegment(padWest.nextY, 0, width - padWest.height);
     padWest.xpos = "left";
     
-    for (ball of Ball.balls) {
+    for (var key in Ball.balls) {
+      var ball = Ball.balls[key];
       ball.nextX = ball.x + Math.round(ball.event.dx * ball.event.speed * deltaT);
       ball.nextY = ball.y + Math.round(ball.event.dy * ball.event.speed * deltaT);
     }
