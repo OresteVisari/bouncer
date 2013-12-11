@@ -15,6 +15,7 @@
   var height = window.innerHeight;
   var eltScore = $("score");
   var eltHealth = $("health");
+  var eltMultiplier =$("multiplier");
 
   /**
    * The time at which some events happened, in milliseconds since the epoch.
@@ -38,7 +39,12 @@
     /**
      * Instant at which we launched the latest ball
      */
-    latestBallLaunch: 0
+    latestBallLaunch: 0,
+    
+    /**
+     * Instant of the last multiplier increase
+     */
+    lastestMultiplierUpdate: Date.now(),
   };
 
   /**
@@ -54,6 +60,12 @@
      * The score in the current frame
      */
     current: 0,
+    
+    /**
+     * The score multiplier, increase when the game lasts longer
+     */
+    multiplier: 1,
+        
   };
   
   /**
@@ -545,7 +557,12 @@
 
       // Update the current score and current health
       if (collisionWithHorizontalPad || collisionWithVerticalPad) {
-        score.current += Game.Config.Score.bounceOnPad;
+        if(timeStamps.currentFrame - timeStamps.lastestMultiplierUpdate >= 10000) {
+          score.multiplier += 0.5;
+          timeStamps.lastestMultiplierUpdate = timeStamps.currentFrame;
+        }
+        
+        score.current += Game.Config.Score.bounceOnPad * score.multiplier;
         health.current += Game.Config.Health.regenerate;
       } else if (horizontalBounce || verticalBounce) {
         score.current += Game.Config.Score.bounceOnWall;
@@ -596,6 +613,11 @@
     });
     screen.style.width = width;
     screen.style.height = height;
+    
+    // Update the score multiplier if it has changed
+    if(timeStamps.lastestMultiplierUpdate == timeStamps.currentFrame && score.multiplier > 1){
+      eltMultiplier.textContent = "x " + score.multiplier;
+    }
 
     // Update the score if it has changed
     if (score.current != score.previous) {
