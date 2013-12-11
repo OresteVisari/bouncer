@@ -525,13 +525,15 @@
       return false;
     }
 
+    var arrayOfNextBall = [];
+    
     // Handle ball bouncing
     for (var ball of Ball.balls) {
       var horizontalBounce = false;
       var verticalBounce = false;
       var collisionWithHorizontalPad = false;
       var collisionWithVerticalPad = false;
-
+      
       if (ball.event.dx < 0) {
         collisionWithHorizontalPad = ball.isCollidingWithAnyPad("E", sprites.padEast);
         horizontalBounce = ball.x <= 0 || collisionWithHorizontalPad;
@@ -554,6 +556,12 @@
       if (verticalBounce) {
         ball.event.dy = -ball.event.dy;
       }
+    
+      if (!((horizontalBounce || verticalBounce) && Ball.balls.length > 1 && !collisionWithHorizontalPad && !collisionWithVerticalPad)){
+        arrayOfNextBall.push(ball);
+      } else {
+        ball.style.borderColor = "transparent";
+      }
 
       // Update the current score and current health
       if (collisionWithHorizontalPad || collisionWithVerticalPad) {
@@ -561,7 +569,7 @@
           score.multiplier += 0.5;
           timeStamps.lastestMultiplierUpdate = timeStamps.currentFrame;
         }
-        
+    
         score.current += Game.Config.Score.bounceOnPad * score.multiplier;
         health.current += Game.Config.Health.regenerate;
       } else if (horizontalBounce || verticalBounce) {
@@ -569,6 +577,8 @@
         health.current += Game.Config.Health.hurt;
       }
     }
+    
+    Ball.balls = arrayOfNextBall;
 
     // Update position of sprites
     // Note that we set both x and y, even for sprites that can move only
